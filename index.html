@@ -32,6 +32,9 @@
       margin-bottom: 30px;
       border-radius: 12px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     h1 {
@@ -42,6 +45,27 @@
     header p {
       color: #666;
       font-size: 16px;
+    }
+
+    .sync-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .sync-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #2d8b2d;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
 
     .stats {
@@ -368,7 +392,6 @@
       margin-top: 30px;
     }
 
-    /* Confirmation Dialog */
     .confirm-dialog {
       background: white;
       padding: 30px;
@@ -395,6 +418,22 @@
       justify-content: flex-end;
     }
 
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #c62828;
+    }
+
     @media (max-width: 768px) {
       .pnm-grid {
         grid-template-columns: 1fr;
@@ -419,15 +458,31 @@
       .toolbar button {
         width: 100%;
       }
+
+      header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>🎓 Rush Management System</h1>
-      <p>Track and manage your Potential New Members</p>
+      <div>
+        <h1>🎓 Rush Management System</h1>
+        <p>Track and manage your Potential New Members</p>
+      </div>
+      <div class="sync-indicator">
+        <div class="sync-dot"></div>
+        <span>Cloud Synced</span>
+      </div>
     </header>
+
+    <div id="loadingIndicator" class="loading" style="display: none;">
+      Loading data...
+    </div>
 
     <!-- Stats -->
     <div class="stats">
@@ -596,23 +651,52 @@
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
   <script>
-    // Data storage using localStorage
-    let pnms = JSON.parse(localStorage.getItem('pnms')) || [];
-    let currentId = parseInt(localStorage.getItem('currentId')) || 0;
+    // Firebase Configuration
+    // IMPORTANT: Replace this with your own Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAx5DFQzm-y6aaSLLSpsVWc0IoJ-m4F1rA",
+      authDomain: "pnm-rush-database.firebaseapp.com",
+      projectId: "pnm-rush-database",
+      storageBucket: "pnm-rush-database.firebasestorage.app",
+      messagingSenderId: "708351837426",
+      appId: "1:708351837426:web:7b449306691a0a96317c6b",
+      measurementId: "G-NVQ41C0LZ8"
+    };
+
+    // Initialize Firebase
+    let db;
+    let pnmsRef;
+    let pnms = [];
     let confirmCallback = null;
 
-    // Initialize
-    updateStats();
-    displayPNMs();
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      pnmsRef = db.ref('pnms');
+      
+      // Listen for real-time updates
+      pnmsRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        pnms = data ? Object.keys(data).map(key => ({ ...data[key], id: key })) : [];
+        updateStats();
+        displayPNMs();
+      });
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      alert('Error: Could not connect to database. Please check Firebase configuration.');
+    }
 
     // Save PNM
-    function savePNM(event) {
+    async function savePNM(event) {
       event.preventDefault();
       
       const id = document.getElementById('pnmId').value;
       const pnm = {
-        id: id ? parseInt(id) : ++currentId,
         fullName: document.getElementById('fullName').value,
         phone: document.getElementById('phone').value,
         email: document.getElementById('email').value,
@@ -625,24 +709,22 @@
         status: document.getElementById('status').value,
         assignedBrothers: document.getElementById('assignedBrothers').value,
         notes: document.getElementById('notes').value,
-        dateAdded: id ? pnms.find(p => p.id === parseInt(id)).dateAdded : new Date().toISOString()
+        dateAdded: id ? pnms.find(p => p.id === id).dateAdded : new Date().toISOString()
       };
 
-      if (id) {
-        // Edit existing
-        const index = pnms.findIndex(p => p.id === parseInt(id));
-        pnms[index] = pnm;
-      } else {
-        // Add new
-        pnms.push(pnm);
+      try {
+        if (id) {
+          // Update existing
+          await pnmsRef.child(id).set(pnm);
+        } else {
+          // Add new
+          await pnmsRef.push(pnm);
+        }
+        closeModal();
+      } catch (error) {
+        console.error('Error saving PNM:', error);
+        alert('Error saving PNM. Please try again.');
       }
-
-      localStorage.setItem('pnms', JSON.stringify(pnms));
-      localStorage.setItem('currentId', currentId);
-      
-      closeModal();
-      updateStats();
-      displayPNMs();
     }
 
     // Confirm delete PNM
@@ -656,13 +738,14 @@
     }
 
     // Delete PNM
-    function deletePNM(id) {
-      pnms = pnms.filter(p => p.id !== id);
-      localStorage.setItem('pnms', JSON.stringify(pnms));
-      
-      updateStats();
-      displayPNMs();
-      closeConfirmModal();
+    async function deletePNM(id) {
+      try {
+        await pnmsRef.child(id).remove();
+        closeConfirmModal();
+      } catch (error) {
+        console.error('Error deleting PNM:', error);
+        alert('Error deleting PNM. Please try again.');
+      }
     }
 
     // Edit PNM
@@ -731,8 +814,8 @@
             ${pnm.notes ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;"><strong>Notes:</strong><br><span style="color: #666;">${escapeHtml(pnm.notes)}</span></div>` : ''}
           </div>
           <div class="pnm-actions">
-            <button class="btn-primary btn-sm" onclick="editPNM(${pnm.id})">✏️ Edit</button>
-            <button class="btn-danger btn-sm" onclick="confirmDelete(${pnm.id})">🗑️ Delete</button>
+            <button class="btn-primary btn-sm" onclick="editPNM('${pnm.id}')">✏️ Edit</button>
+            <button class="btn-danger btn-sm" onclick="confirmDelete('${pnm.id}')">🗑️ Delete</button>
           </div>
         </div>
       `).join('');
@@ -742,7 +825,6 @@
     function getFilteredPNMs() {
       let filtered = [...pnms];
       
-      // Search
       const search = document.getElementById('searchInput').value.toLowerCase();
       if (search) {
         filtered = filtered.filter(p => 
@@ -752,13 +834,11 @@
         );
       }
       
-      // Status filter
       const status = document.getElementById('statusFilter').value;
       if (status !== 'All') {
         filtered = filtered.filter(p => p.status === status);
       }
       
-      // Sort
       const sortBy = document.getElementById('sortBy').value;
       filtered.sort((a, b) => {
         if (sortBy === 'name') {
@@ -833,15 +913,14 @@
     }
 
     // Reset data
-    function resetData() {
-      pnms = [];
-      currentId = 0;
-      localStorage.setItem('pnms', JSON.stringify(pnms));
-      localStorage.setItem('currentId', currentId);
-      
-      updateStats();
-      displayPNMs();
-      closeConfirmModal();
+    async function resetData() {
+      try {
+        await pnmsRef.remove();
+        closeConfirmModal();
+      } catch (error) {
+        console.error('Error resetting data:', error);
+        alert('Error resetting data. Please try again.');
+      }
     }
 
     // Export CSV
