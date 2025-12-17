@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rush Management System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #1a5f1a 0%, #2d8b2d 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      color: #1a5f1a;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1a5f1a;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filters {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input, select, textarea {
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #2d8b2d;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-primary {
+      background: #2d8b2d;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1a5f1a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    .pnm-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+
+    .pnm-card {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+      border-left: 5px solid #2d8b2d;
+    }
+
+    .pnm-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    .pnm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .pnm-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a5f1a;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-interested { 
+      background: #e3f2fd; 
+      color: #1976d2; 
+    }
+    
+    .status-invited { 
+      background: #fff8e1; 
+      color: #f57c00; 
+    }
+    
+    .status-bid { 
+      background: #e8f5e9; 
+      color: #2d8b2d; 
+      border: 2px solid #2d8b2d;
+    }
+    
+    .status-dropped { 
+      background: #ffebee; 
+      color: #dc3545; 
+      border: 2px solid #dc3545;
+    }
+
+    .pnm-info {
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .pnm-info div {
+      margin-bottom: 8px;
+      padding: 4px 0;
+    }
+
+    .pnm-info strong {
+      color: #1a5f1a;
+    }
+
+    .rating {
+      color: #ffc107;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .pnm-actions {
+      display: flex;
+      gap: 10px;
+      padding-top: 15px;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      padding: 25px;
+      border-bottom: 2px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .modal-header h2 {
+      font-size: 24px;
+      color: #1a5f1a;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 32px;
+      color: #999;
+      cursor: pointer;
+      padding: 0;
+      width: 35px;
+      height: 35px;
+      transition: color 0.2s;
+    }
+
+    .close-btn:hover {
+      color: #dc3545;
+    }
+
+    .modal-body {
+      padding: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #1a5f1a;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .no-pnms {
+      background: rgba(255, 255, 255, 0.95);
+      text-align: center;
+      padding: 80px 20px;
+      color: #666;
+      font-size: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .no-pnms-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .empty-state-action {
+      margin-top: 30px;
+    }
+
+    /* Confirmation Dialog */
+    .confirm-dialog {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .confirm-dialog h3 {
+      color: #dc3545;
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
+
+    .confirm-dialog p {
+      margin-bottom: 20px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 768px) {
+      .pnm-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .filters {
+        flex-direction: column;
+      }
+      
+      .search-input {
+        width: 100%;
+      }
+
+      .toolbar {
+        flex-direction: column;
+      }
+
+      .toolbar button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎓 Rush Management System</h1>
+      <p>Track and manage your Potential New Members</p>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total PNMs</div>
+        <div class="stat-value" id="totalPnms">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Bids Given</div>
+        <div class="stat-value" id="bidsGiven">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Average Rating</div>
+        <div class="stat-value" id="avgRating">0.0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Conversion Rate</div>
+        <div class="stat-value" id="conversionRate">0%</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button class="btn-primary" onclick="openAddModal()">+ Add New PNM</button>
+      <button class="btn-secondary" onclick="exportCSV()">Export CSV</button>
+      <button class="btn-danger" onclick="confirmReset()">Reset All Data</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by name, major, or year..." oninput="filterPNMs()">
+      
+      <select id="statusFilter" onchange="filterPNMs()">
+        <option value="All">All Statuses</option>
+        <option value="Interested">Interested</option>
+        <option value="Invited Back">Invited Back</option>
+        <option value="Bid Given">Bid Given</option>
+        <option value="Dropped">Dropped</option>
+      </select>
+
+      <select id="sortBy" onchange="filterPNMs()">
+        <option value="name">Sort by Name</option>
+        <option value="rating">Sort by Rating</option>
+        <option value="date">Sort by Date Added</option>
+      </select>
+    </div>
+
+    <!-- PNM Grid -->
+    <div id="pnmGrid" class="pnm-grid">
+      <div class="no-pnms">
+        <div class="no-pnms-icon">📋</div>
+        <div>No PNMs yet</div>
+        <div class="empty-state-action">
+          <button class="btn-primary" onclick="openAddModal()">Add Your First PNM</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div id="pnmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New PNM</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="pnmForm" onsubmit="savePNM(event)">
+          <input type="hidden" id="pnmId">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="fullName" required>
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="phone">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="email">
+            </div>
+            <div class="form-group">
+              <label>Major</label>
+              <input type="text" id="major">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Graduation Year</label>
+              <input type="number" id="gradYear" min="2024" max="2030">
+            </div>
+            <div class="form-group">
+              <label>GPA</label>
+              <input type="number" id="gpa" min="0" max="4" step="0.01">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Hometown</label>
+              <input type="text" id="hometown">
+            </div>
+            <div class="form-group">
+              <label>How They Heard</label>
+              <select id="howHeard">
+                <option value="">Select...</option>
+                <option value="Tabling">Tabling</option>
+                <option value="Party">Party</option>
+                <option value="Friend Referral">Friend Referral</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Rating (1-10)</label>
+              <input type="number" id="rating" min="1" max="10">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="status">
+                <option value="Interested">Interested</option>
+                <option value="Invited Back">Invited Back</option>
+                <option value="Bid Given">Bid Given</option>
+                <option value="Dropped">Dropped</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Assigned Brothers</label>
+            <input type="text" id="assignedBrothers" placeholder="e.g., John, Mike, Chris">
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="notes" rows="4"></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save PNM</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirmModal" class="modal">
+    <div class="confirm-dialog">
+      <h3 id="confirmTitle">⚠️ Confirm Action</h3>
+      <p id="confirmMessage">Are you sure?</p>
+      <div class="confirm-actions">
+        <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn-danger" id="confirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data storage using localStorage
+    let pnms = JSON.parse(localStorage.getItem('pnms')) || [];
+    let currentId = parseInt(localStorage.getItem('currentId')) || 0;
+    let confirmCallback = null;
+
+    // Initialize
+    updateStats();
+    displayPNMs();
+
+    // Save PNM
+    function savePNM(event) {
+      event.preventDefault();
+      
+      const id = document.getElementById('pnmId').value;
+      const pnm = {
+        id: id ? parseInt(id) : ++currentId,
+        fullName: document.getElementById('fullName').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        major: document.getElementById('major').value,
+        gradYear: document.getElementById('gradYear').value,
+        gpa: document.getElementById('gpa').value,
+        hometown: document.getElementById('hometown').value,
+        howHeard: document.getElementById('howHeard').value,
+        rating: document.getElementById('rating').value,
+        status: document.getElementById('status').value,
+        assignedBrothers: document.getElementById('assignedBrothers').value,
+        notes: document.getElementById('notes').value,
+        dateAdded: id ? pnms.find(p => p.id === parseInt(id)).dateAdded : new Date().toISOString()
+      };
+
+      if (id) {
+        // Edit existing
+        const index = pnms.findIndex(p => p.id === parseInt(id));
+        pnms[index] = pnm;
+      } else {
+        // Add new
+        pnms.push(pnm);
+      }
+
+      localStorage.setItem('pnms', JSON.stringify(pnms));
+      localStorage.setItem('currentId', currentId);
+      
+      closeModal();
+      updateStats();
+      displayPNMs();
+    }
+
+    // Confirm delete PNM
+    function confirmDelete(id) {
+      const pnm = pnms.find(p => p.id === id);
+      showConfirmDialog(
+        '🗑️ Delete PNM',
+        `Are you sure you want to delete <strong>${pnm.fullName}</strong>? This action cannot be undone.`,
+        () => deletePNM(id)
+      );
+    }
+
+    // Delete PNM
+    function deletePNM(id) {
+      pnms = pnms.filter(p => p.id !== id);
+      localStorage.setItem('pnms', JSON.stringify(pnms));
+      
+      updateStats();
+      displayPNMs();
+      closeConfirmModal();
+    }
+
+    // Edit PNM
+    function editPNM(id) {
+      const pnm = pnms.find(p => p.id === id);
+      
+      document.getElementById('modalTitle').textContent = 'Edit PNM';
+      document.getElementById('pnmId').value = pnm.id;
+      document.getElementById('fullName').value = pnm.fullName;
+      document.getElementById('phone').value = pnm.phone || '';
+      document.getElementById('email').value = pnm.email || '';
+      document.getElementById('major').value = pnm.major || '';
+      document.getElementById('gradYear').value = pnm.gradYear || '';
+      document.getElementById('gpa').value = pnm.gpa || '';
+      document.getElementById('hometown').value = pnm.hometown || '';
+      document.getElementById('howHeard').value = pnm.howHeard || '';
+      document.getElementById('rating').value = pnm.rating || '';
+      document.getElementById('status').value = pnm.status || 'Interested';
+      document.getElementById('assignedBrothers').value = pnm.assignedBrothers || '';
+      document.getElementById('notes').value = pnm.notes || '';
+      
+      document.getElementById('pnmModal').classList.add('active');
+    }
+
+    // Display PNMs
+    function displayPNMs() {
+      const filtered = getFilteredPNMs();
+      const grid = document.getElementById('pnmGrid');
+      
+      if (filtered.length === 0) {
+        if (pnms.length === 0) {
+          grid.innerHTML = `
+            <div class="no-pnms">
+              <div class="no-pnms-icon">📋</div>
+              <div>No PNMs yet</div>
+              <div class="empty-state-action">
+                <button class="btn-primary" onclick="openAddModal()">Add Your First PNM</button>
+              </div>
+            </div>
+          `;
+        } else {
+          grid.innerHTML = `
+            <div class="no-pnms">
+              <div class="no-pnms-icon">🔍</div>
+              <div>No PNMs match your filters</div>
+            </div>
+          `;
+        }
+        return;
+      }
+      
+      grid.innerHTML = filtered.map(pnm => `
+        <div class="pnm-card">
+          <div class="pnm-header">
+            <div class="pnm-name">${escapeHtml(pnm.fullName)}</div>
+            <span class="status-badge status-${getStatusClass(pnm.status)}">${pnm.status}</span>
+          </div>
+          <div class="pnm-info">
+            ${pnm.major ? `<div><strong>Major:</strong> ${escapeHtml(pnm.major)}</div>` : ''}
+            ${pnm.gradYear ? `<div><strong>Class of:</strong> ${pnm.gradYear}</div>` : ''}
+            ${pnm.phone ? `<div><strong>Phone:</strong> ${escapeHtml(pnm.phone)}</div>` : ''}
+            ${pnm.email ? `<div><strong>Email:</strong> ${escapeHtml(pnm.email)}</div>` : ''}
+            ${pnm.hometown ? `<div><strong>Hometown:</strong> ${escapeHtml(pnm.hometown)}</div>` : ''}
+            ${pnm.rating ? `<div><strong>Rating:</strong> <span class="rating">★ ${pnm.rating}/10</span></div>` : ''}
+            ${pnm.assignedBrothers ? `<div><strong>Brothers:</strong> ${escapeHtml(pnm.assignedBrothers)}</div>` : ''}
+            ${pnm.notes ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;"><strong>Notes:</strong><br><span style="color: #666;">${escapeHtml(pnm.notes)}</span></div>` : ''}
+          </div>
+          <div class="pnm-actions">
+            <button class="btn-primary btn-sm" onclick="editPNM(${pnm.id})">✏️ Edit</button>
+            <button class="btn-danger btn-sm" onclick="confirmDelete(${pnm.id})">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Filter PNMs
+    function getFilteredPNMs() {
+      let filtered = [...pnms];
+      
+      // Search
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      if (search) {
+        filtered = filtered.filter(p => 
+          p.fullName.toLowerCase().includes(search) ||
+          (p.major && p.major.toLowerCase().includes(search)) ||
+          (p.gradYear && p.gradYear.toString().includes(search))
+        );
+      }
+      
+      // Status filter
+      const status = document.getElementById('statusFilter').value;
+      if (status !== 'All') {
+        filtered = filtered.filter(p => p.status === status);
+      }
+      
+      // Sort
+      const sortBy = document.getElementById('sortBy').value;
+      filtered.sort((a, b) => {
+        if (sortBy === 'name') {
+          return a.fullName.localeCompare(b.fullName);
+        } else if (sortBy === 'rating') {
+          return (b.rating || 0) - (a.rating || 0);
+        } else if (sortBy === 'date') {
+          return new Date(b.dateAdded) - new Date(a.dateAdded);
+        }
+        return 0;
+      });
+      
+      return filtered;
+    }
+
+    function filterPNMs() {
+      displayPNMs();
+    }
+
+    // Update stats
+    function updateStats() {
+      const total = pnms.length;
+      const bids = pnms.filter(p => p.status === 'Bid Given').length;
+      const ratings = pnms.filter(p => p.rating).map(p => parseFloat(p.rating));
+      const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '0.0';
+      const conversionRate = total > 0 ? ((bids / total) * 100).toFixed(0) : '0';
+      
+      document.getElementById('totalPnms').textContent = total;
+      document.getElementById('bidsGiven').textContent = bids;
+      document.getElementById('avgRating').textContent = avgRating;
+      document.getElementById('conversionRate').textContent = conversionRate + '%';
+    }
+
+    // Modal functions
+    function openAddModal() {
+      document.getElementById('modalTitle').textContent = 'Add New PNM';
+      document.getElementById('pnmForm').reset();
+      document.getElementById('pnmId').value = '';
+      document.getElementById('pnmModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('pnmModal').classList.remove('active');
+    }
+
+    // Confirmation dialog
+    function showConfirmDialog(title, message, callback) {
+      document.getElementById('confirmTitle').innerHTML = title;
+      document.getElementById('confirmMessage').innerHTML = message;
+      confirmCallback = callback;
+      
+      const confirmBtn = document.getElementById('confirmBtn');
+      confirmBtn.onclick = () => {
+        if (confirmCallback) confirmCallback();
+      };
+      
+      document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModal').classList.remove('active');
+      confirmCallback = null;
+    }
+
+    // Confirm reset
+    function confirmReset() {
+      showConfirmDialog(
+        '⚠️ RESET ALL DATA',
+        'This will permanently delete <strong>ALL PNMs</strong> and cannot be undone.<br><br>Are you absolutely sure you want to continue?',
+        resetData
+      );
+    }
+
+    // Reset data
+    function resetData() {
+      pnms = [];
+      currentId = 0;
+      localStorage.setItem('pnms', JSON.stringify(pnms));
+      localStorage.setItem('currentId', currentId);
+      
+      updateStats();
+      displayPNMs();
+      closeConfirmModal();
+    }
+
+    // Export CSV
+    function exportCSV() {
+      if (pnms.length === 0) {
+        alert('No PNMs to export!');
+        return;
+      }
+      
+      const headers = ['Name', 'Phone', 'Email', 'Major', 'Year', 'GPA', 'Hometown', 'How Heard', 'Rating', 'Status', 'Brothers', 'Notes'];
+      let csv = headers.join(',') + '\n';
+      
+      pnms.forEach(pnm => {
+        const row = [
+          `"${pnm.fullName}"`,
+          `"${pnm.phone || ''}"`,
+          `"${pnm.email || ''}"`,
+          `"${pnm.major || ''}"`,
+          pnm.gradYear || '',
+          pnm.gpa || '',
+          `"${pnm.hometown || ''}"`,
+          `"${pnm.howHeard || ''}"`,
+          pnm.rating || '',
+          `"${pnm.status}"`,
+          `"${pnm.assignedBrothers || ''}"`,
+          `"${(pnm.notes || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(',') + '\n';
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pnms_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    // Helper functions
+    function getStatusClass(status) {
+      const map = {
+        'Interested': 'interested',
+        'Invited Back': 'invited',
+        'Bid Given': 'bid',
+        'Dropped': 'dropped'
+      };
+      return map[status] || 'interested';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const pnmModal = document.getElementById('pnmModal');
+      const confirmModal = document.getElementById('confirmModal');
+      
+      if (event.target === pnmModal) {
+        closeModal();
+      }
+      if (event.target === confirmModal) {
+        closeConfirmModal();
+      }
+    }
+  </script>
+</body>
+</html>
