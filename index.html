@@ -640,10 +640,8 @@
 
   <script>
     // ============================================
-    // SETUP: Replace YOUR_BIN_ID_HERE with your actual JSONBin ID
-    // Get your Bin ID from: https://jsonbin.io
-    // Create a bin with: {"pnms":[]}
-    // Example: const BIN_ID = '676123abc456def789';
+    // Cloud Database Configuration
+    // This Bin ID connects everyone to the same data
     // ============================================
     const BIN_ID = '69433938d0ea881f4030b43c';
     
@@ -658,14 +656,6 @@
     loadData();
 
     async function loadData() {
-      if (BIN_ID === 'YOUR_BIN_ID_HERE') {
-        // No bin configured - use localStorage only
-        pnms = JSON.parse(localStorage.getItem('pnms')) || [];
-        updateStats();
-        displayPNMs();
-        return;
-      }
-
       try {
         const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
           headers: { 'X-Access-Key': API_KEY }
@@ -686,10 +676,6 @@
     async function saveData() {
       // Always save to localStorage as backup
       localStorage.setItem('pnms', JSON.stringify(pnms));
-
-      if (BIN_ID === 'YOUR_BIN_ID_HERE') {
-        return; // No cloud sync configured
-      }
 
       try {
         await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
@@ -1001,9 +987,7 @@
 
     // Auto-refresh from cloud every 10 seconds
     setInterval(() => {
-      if (BIN_ID !== 'YOUR_BIN_ID_HERE') {
-        loadData();
-      }
+      loadData();
     }, 10000);
   </script>
 </body>
